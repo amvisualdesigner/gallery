@@ -1,111 +1,246 @@
-UInterface.namespace('Utilities.DOMFactory');
+UInterface.namespace('Utilities.Cache');
+UInterface.namespace('Utilities.DOM');
 UInterface.namespace('Utilities.Storage');
 
-/*
- * -------------------------------------------------- 
- * DOMFACTORY
- * --------------------------------------------------
- */
-UInterface.Utilities.DOMFactory = {
-
-	DOM : function(type) {
+UInterface.Utilities.Cache = {
 		
-		"use strict";
-		
-		this.textNode = {
-			insert : function(ptarget) {
-				var txt = document.createTextNode(this.text);
-				ptarget.appendChild(txt);
+		cacheElements : {},
+		isInCache : function(pkey) {
+			return (this.cacheElements.hasOwnProperty(pkey));
+		},
+		addToCache : function(pkey, pElement) {
+			if (!this.isInCache(pkey)) {
+				this.cacheElements[pkey] = pElement;
 			}
-		};
-
-		this.link = {
-			insert : function(ptarget) {
-				var link = document.createElement('a');
-				link.href = this.url;
-				link.target = this.target;
-				link.appendChild(document.createTextNode(this.url));
-				ptarget.appendChild(link);
-			}
-		};
-
-		this.image = {
-			insert : function(ptarget) {
-				var im = document.createElement('img');
-				im.src = this.url;
-				im.alt = this.alt;
-				ptarget.appendChild(im);
-			}
-		};
-
-		this.script = {
-			insert : function(ptarget) {
-				var sc = document.createElement('script');
-				sc.src = this.url;
-				ptarget.parentNode.insertBefore(sc, ptarget);
-			}
-		};
-
-		return this[type];
-
-	},
-	factory : function(type) {
-		
-		"use strict";
-		var DOM = UInterface.Utilities.DOMFactory.DOM;
-		
-		return new DOM(type);
-		
-	}
+			return this.cacheElements[pkey];
+		}
 
 };
 
-/*
- * -------------------------------------------------- 
- * STORAGE
- * --------------------------------------------------
+UInterface.Utilities.DOM = {
+	
+	DOMType : (function(doc){
+
+			return {
+				textNode : function(ptarget) {
+					var txt = doc.createTextNode(this.text);
+					if (ptarget && ptarget.appendChild) {
+						ptarget.appendChild(txt);
+					}
+				},
+				link : function(ptarget) {
+					var link = doc.createElement('a');
+					link.href = this.url;
+					if (this.target) {
+						link.target = this.target;
+					}
+					link.appendChild(doc.createTextNode(this.url));
+					if (ptarget && ptarget.appendChild) {
+						ptarget.appendChild(link);
+					}
+				},
+				image : function(ptarget) {
+					var im = doc.createElement('img');
+					im.src = this.url;
+					if (this.alt) {
+						im.alt = this.alt;
+					}
+					if (ptarget && ptarget.appendChild) {
+						ptarget.appendChild(im);
+					}
+				},
+				script : function(ptarget) {
+					var sc = doc.createElement('script');
+					sc.src = this.url;
+					if (this.id) {
+						sc.id = this.id;
+					}
+					if (ptarget && ptarget.appendChild) {
+						ptarget.parentNode.insertBefore(sc, ptarget);
+					}
+				}
+			};
+			
+	})(window.document),
+
+	DOMElement : (function(ptype) {
+		
+		"use strict";
+
+		var Const = function DOMElement (pconfig, ptype) {
+			
+			if (!(this instanceof Const)) {
+				return new Const(pconfig, ptype);
+			}
+			
+			if (typeof pconfig === 'object') {
+				for (var prop in pconfig) {
+					if (Object.hasOwnProperty.call(pconfig, prop)) {
+						this[prop] = pconfig[prop];
+					}
+				}
+			}
+			
+			if (typeof ptype === 'string') {
+				this.type = ptype;
+			}
+
+		};
+		
+		Const.prototype.insert = function (ptarget, pkey) {
+				var utilities = UInterface.Utilities;
+				utilities.Cache.addToCache(pkey, this);
+				utilities.DOM.DOMType[this.type].call(this, ptarget);
+				
+		};
+
+		return Const;
+		
+	}())
+	
+};
+
+/**
+ * @namespace UInterface.Utilities.Storage
+ * @class Storage
  */
 UInterface.Utilities.Storage = {
-		
-	// PARSE
-	parseAll : function(pjson) {
+	
+	/**
+	 * @method parseAll
+	 * @param {string} a JSON string
+	 * @return {Object} the parsed object
+	 */
+	parseAll: function(pjson) {
 		
 		"use strict";
-		// TODO
+		// TODO parse all
 		
 	},
-	parseObject : function(pobj, pconstr) {
+	
+	/**
+	 * @method parseObject
+	 * @param {string} a JSON string
+	 * @param {string} the constructor name
+	 * @return {Object} the parsed object
+	 */
+	parseObject: function(pjson, pconstr) {
 		
 		"use strict";
-		var data = JSON.parse(pobj);
-		
+		var data;
+		try {
+			data = JSON.parse(pjson);
+			if (typeof data === 'undefined' && typeof JSON.parse() !== 'function') {
+				throw {
+					name: "parseError", 
+					message: 'There was an error on JSON parse',
+					json: pjson,
+					constr: pconstr,
+					remedy: this.loadJsJSON
+				};
+			} else if (typeof data === 'undefined') {
+				throw {
+					name: "parseError", 
+					message: 'Data error, try again later'
+				};
+			}
+		} catch (e) {
+			if (e.remedy) {
+				e.remedy();
+			} else {
+				alert(e.message);
+			}
+		}
 		return new pconstr(data);
 		
 	},
-	// STRINGIFY
-	// TODO CODE STRINGIFY
-	// STORAGE
-	storageAll : function(pkey, pdata) {
+	
+	/**
+	 * @method stringify
+	 * @param {Object} an instance
+	 * @return {string} the same instance stringify
+	 */
+	stringify: function (pdata) {
 		
 		"use strict";
 		var data;
 		try {
 			data = JSON.stringify(pdata);
-			localStorage.setItem(pkey, data);
-			// TODO THROW EXCEPTION
+			if(typeof data === 'undefined' && typeof JSON.parse() !== 'function') {  
+				throw {
+					name: "stringifyError", 
+					message: 'There was an error on JSON stringify',
+					data: pdata,
+					remedy: this.loadJsJSON
+				};
+			} else if (typeof data === 'undefined') {
+				throw {
+					name: "stringifyError", 
+					message: 'Data error, try again later'
+				};
+			}
 		} catch (e) {
-			console.log(e);
-			data = null;
+			if (e.remedy) {
+				e.remedy();
+			} else {
+				alert(e.message);
+			}
 		}
+		return data;
+	},
+	
+	/**
+	 * @method storageAll
+	 * @param {string} the key for storage
+	 * @param {Object} an instance
+	 * @return {string} the same instance stringify
+	 */
+	storageAll: function(pkey, pdata) {
 		
+		"use strict";
+		var data = this.stringify(pdata);
+		if (data !== 'undefined' && localStorage) {
+			localStorage.setItem(pkey, data);
+		} else {
+			alert ('No cover to send data and your broser does not support local storage. Please, use Chrome or Firefox');
+		}
 		return data;
 		
 	},
-	getStorage : function(pkey) {
+	
+	/**
+	 * @method getStorage
+	 * @param {string} the storage key
+	 * @return {string} the storage item
+	 */
+	getStorage: function(pkey) {
 		
 		"use strict";
+		if (localStorage) {
+			return localStorage.getItem(pkey);
+		} else {
+			alert ('No cover to load data and your broser does not support local storage. Please, use Chrome or Firefox');
+		}
 		
-		return localStorage.getItem(pkey);
+	},
+
+	/**
+	 * @method loadJsJSON
+	 * @param {Object} error object
+	 * @return {string || Object} the data stringify or parser
+	 */
+	loadJsJSON: function (e) {
 		
+		"use strict";
+		var myScript = UInterface.Utilities.DOM.DOMElement({url: 'js/json2.js', id: 'json'},'script');
+		myScript.insert(window.document.getElementsByTagName('script')[0], 'json');
+		if (e.name === 'stringifyError') {
+			return this.stringify(e.data);
+		} else if (e.name === 'parseError') {
+			return this.parseObject(e.json, e.constr);
+		} else {
+			alert (e.message);
+		}
+
 	}
 };

@@ -1,9 +1,22 @@
+/**
+ * 
+ * @namespace UInterface  
+ * @name UInterface
+ * @author amvisualdesigner > email: am@amvisualdesigner.eu
+ * 
+ */
+
 var UInterface = UInterface || {};
 
-(function() {
+(function(doc) {
 	
 	"use strict";
 	
+	/**
+	 * @method namespace
+	 * @param {string} a namespace string, for example > UInterface.GALLERY
+	 * @return {Object} a namespace object
+	 */
 	UInterface.namespace = function(pNsStr) {
 
 		var parts = pNsStr.split('.'), parent = UInterface, i;
@@ -23,17 +36,21 @@ var UInterface = UInterface || {};
 		return parent;
 
 	};
-
-	var initialize = function() {
+	
+	/**
+	 * @method initialize
+	 */
+	UInterface.initialize = function() {
 
 		var GALLERY = UInterface.GALLERY, 
 			Utilities = UInterface.Utilities, 
-			DOMFactory = Utilities.DOMFactory.factory, 
+			DOMElement = Utilities.DOM.DOMElement, 
 			Storage = Utilities.Storage, 
 			Picture = GALLERY.entities.Picture, 
 			Project = GALLERY.entities.Project;
 
-		// TEST
+		// TEST!
+		var stage = doc.getElementById('stage');
 		var myGallery = new GALLERY({
 			stage : 'stage',
 			sizes : [ {
@@ -71,23 +88,37 @@ var UInterface = UInterface || {};
 			genericImg : myGenericImg
 		});
 		myGallery.addProject(myProject2);
-		console.log(myGallery);
 
-		var myLink = DOMFactory('link');
-		myLink.url = 'http://www.amvisualdesigner.eu';
-		myLink.insert(document.getElementById('stage'));
-
+		var myLink = new DOMElement({
+			url: 'http://www.amvisualdesigner.eu',
+			target: '_blank'
+			}, 'link');
+		myLink.insert(stage, 'amLink');
+		Storage.storageAll('DOM Cache', UInterface.Utilities.Cache.cacheElements);
 		Storage.storageAll('Gallery', myGallery);
 		var temp = Storage.getStorage('Gallery');
-		console.log(temp);
+		
+		var pictureTemp = Storage.storageAll('Picture', myThumb);
+		var myObject = Storage.parseObject(pictureTemp, Picture);		
+		console.log(myObject.toString());
 
-		var myObject = Storage.parseObject(Storage.storageAll('Picture', myThumb), Picture);
-		console.log(myObject);
-		console.log(myObject.getId());
-		console.log(myObject.type);
+		var errorTemp = Storage.loadJsJSON(
+						{name: "stringifyError", 
+						message: 'There was an error on JSON stringify',
+						data: myThumb}
+						);
+		console.log(errorTemp);
+		
 
 	};
 
-	window.onload = initialize;
+	/**
+	 * @event onreadystatechange (document ready event handler)
+	 */
+	doc.onreadystatechange = function () {
+		  if (doc.readyState === "complete") {
+			  UInterface.initialize();
+		  }
+	};
 
-})();
+})(window.document);
