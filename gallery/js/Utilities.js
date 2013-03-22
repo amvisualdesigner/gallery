@@ -2,77 +2,130 @@ UInterface.namespace('Utilities.Cache');
 UInterface.namespace('Utilities.DOM');
 UInterface.namespace('Utilities.Storage');
 
+/**
+ * @namespace UInterface.Utilities.Cache
+ * @class Cache
+ */
 UInterface.Utilities.Cache = {
 		
+		/**
+		 * @property cacheElements
+		 * @type {Object} a literal object with cache key and value
+		 */
 		cacheElements : {},
+		
+		/**
+		 * @method isInCache
+		 * @param {string} a cache key
+		 * @return {boolean}
+		 */
 		isInCache : function(pkey) {
+			
+			"use strict";
 			return (this.cacheElements.hasOwnProperty(pkey));
+			
 		},
+		
+		/**
+		 * @method addToCache
+		 * @param {string} a cache key
+		 * @param {Object} an object to push on cache
+		 * @return {Object} a cache object
+		 */
 		addToCache : function(pkey, pElement) {
+			
+			"use strict";
 			if (!this.isInCache(pkey)) {
 				this.cacheElements[pkey] = pElement;
 			}
 			return this.cacheElements[pkey];
+			
 		}
 
 };
 
+/**
+ * @namespace UInterface.Utilities.DOM
+ * @class DOM
+ */
 UInterface.Utilities.DOM = {
 	
+	/**
+	 * @method DOMType
+	 * @param {Object} window.document object
+	 * @return {Object} a literal object with all funtions for create DOM elements
+	 */
 	DOMType : (function(doc){
-
-			return {
-				textNode : function(ptarget) {
-					var txt = doc.createTextNode(this.text);
-					if (ptarget && ptarget.appendChild) {
-						ptarget.appendChild(txt);
-					}
-				},
-				link : function(ptarget) {
-					var link = doc.createElement('a');
-					link.href = this.url;
-					if (this.target) {
-						link.target = this.target;
-					}
-					link.appendChild(doc.createTextNode(this.url));
-					if (ptarget && ptarget.appendChild) {
-						ptarget.appendChild(link);
-					}
-				},
-				image : function(ptarget) {
-					var im = doc.createElement('img');
-					im.src = this.url;
-					if (this.alt) {
-						im.alt = this.alt;
-					}
-					if (ptarget && ptarget.appendChild) {
-						ptarget.appendChild(im);
-					}
-				},
-				script : function(ptarget) {
-					var sc = doc.createElement('script');
-					sc.src = this.url;
-					if (this.id) {
-						sc.id = this.id;
-					}
-					if (ptarget && ptarget.appendChild) {
-						ptarget.parentNode.insertBefore(sc, ptarget);
-					}
+		
+		"use strict";
+		return {
+			textNode : function(ptarget) {
+				
+				var txt = doc.createTextNode(this.text);
+				if (ptarget && ptarget.appendChild) {
+					ptarget.appendChild(txt);
 				}
-			};
+				
+			},
+			link : function(ptarget) {
+				
+				var link = doc.createElement('a');
+				link.href = this.url;
+				if (this.target) {
+					link.target = this.target;
+				}
+				link.appendChild(doc.createTextNode(this.url));
+				if (ptarget && ptarget.appendChild) {
+					ptarget.appendChild(link);
+				}
+				
+			},
+			image : function(ptarget) {
+				
+				var im = doc.createElement('img');
+				im.src = this.url;
+				if (this.alt) {
+					im.alt = this.alt;
+				}
+				if (ptarget && ptarget.appendChild) {
+					ptarget.appendChild(im);
+				}
+				
+			},
+			script : function(ptarget) {
+				
+				var sc = doc.createElement('script');
+				sc.src = this.url;
+				if (this.id) {
+					sc.id = this.id;
+				}
+				if (ptarget && ptarget.appendChild) {
+					ptarget.parentNode.insertBefore(sc, ptarget);
+				}
+				
+			}
+		};
 			
 	})(window.document),
 
-	DOMElement : (function(ptype) {
+	/**
+	 * @method DOMElement
+	 * @return {Object} a new DOMElement instance
+	 */
+	DOMElement : (function() {
 		
 		"use strict";
 
+		/**
+		 * @constructor
+		 * @param {Object} a literal object with entity base config parameters
+		 * @param {string} the element type
+		 */
 		var Const = function DOMElement (pconfig, ptype) {
 			
 			if (!(this instanceof Const)) {
 				return new Const(pconfig, ptype);
 			}
-			
 			if (typeof pconfig === 'object') {
 				for (var prop in pconfig) {
 					if (Object.hasOwnProperty.call(pconfig, prop)) {
@@ -80,14 +133,19 @@ UInterface.Utilities.DOM = {
 					}
 				}
 			}
-			
 			if (typeof ptype === 'string') {
 				this.type = ptype;
 			}
 
 		};
 		
+		/**
+		 * @method insert
+		 * @param {Object} the Dom Element to use like target 
+		 * @param {string} the cache key
+		 */
 		Const.prototype.insert = function (ptarget, pkey) {
+			
 				var utilities = UInterface.Utilities;
 				utilities.Cache.addToCache(pkey, this);
 				utilities.DOM.DOMType[this.type].call(this, ptarget);

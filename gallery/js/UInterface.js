@@ -94,7 +94,9 @@ var UInterface = UInterface || {};
 			target: '_blank'
 			}, 'link');
 		myLink.insert(stage, 'amLink');
+		
 		Storage.storageAll('DOM Cache', UInterface.Utilities.Cache.cacheElements);
+		
 		Storage.storageAll('Gallery', myGallery);
 		var temp = Storage.getStorage('Gallery');
 		
@@ -116,9 +118,9 @@ var UInterface = UInterface || {};
 	 * @event onreadystatechange (document ready event handler)
 	 */
 	doc.onreadystatechange = function () {
-		  if (doc.readyState === "complete") {
-			  UInterface.initialize();
-		  }
+		if (doc.readyState === "complete") {
+			UInterface.initialize();
+		}
 	};
 
 })(window.document);

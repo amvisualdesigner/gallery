@@ -50,7 +50,7 @@ UInterface.GALLERY = (function() {
 	 */
 	Const.prototype = {
 		constructor : Const,
-		version : "1.0",
+		version : "1.0"
 	};
 
 	/**
